@@ -30,10 +30,16 @@ Clone the repository:
 
 git clone https://github.com/SkillDevloper/Simple-Quiz-PDF-Generator
 
+Or View Live
+
+https://skilldevloper.github.io/Simple-Quiz-PDF-Generator/
+
 Open the index.html file in your browser.
 Start adding questions and generate your quiz PDF!
 
 # Contributing:
 
 Contributions are welcome! Feel free to fork the repository, make changes, and submit pull requests.
-License:
+# License:
+
+This project is licensed under the MIT License - see the LICENSE file for details.
