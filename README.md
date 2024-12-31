@@ -17,6 +17,7 @@ This project is a simple Quiz PDF Generator that allows users to create a custom
 - CSS3: For styling the layout and making the interface user-friendly.
 - JavaScript: For functionality, handling user input, and dynamically generating the quiz PDF.
 - jsPDF Library: A powerful JavaScript library used to generate the quiz PDF with custom formatting and pagination.
+  
 # How it Works:
 
 - User Input: The user inputs the question and options in the form fields. They can also select the correct answer for each question.
@@ -34,8 +35,6 @@ Or View Live
 
 https://skilldevloper.github.io/Simple-Quiz-PDF-Generator/
 
-Open the index.html file in your browser.
-Start adding questions and generate your quiz PDF!
 
 # Contributing:
 
