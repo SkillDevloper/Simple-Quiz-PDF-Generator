@@ -16,6 +16,7 @@ This project is a simple Quiz PDF Generator that allows users to create a custom
 - HTML5: For creating the structure of the application.
 - CSS3: For styling the layout and making the interface user-friendly.
 - JavaScript: For functionality, handling user input, and dynamically generating the quiz PDF.
+- Tailwind Css: For Designing Beautiful look (UI/UX) 
 - jsPDF Library: A powerful JavaScript library used to generate the quiz PDF with custom formatting and pagination.
   
 # How it Works:
