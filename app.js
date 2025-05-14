@@ -3,191 +3,325 @@ let currentQuestionIndex = 0;
 
 // Load the current question in the form
 function loadQuestion(index) {
-    const questionData = quizData[index];
+  const questionData = quizData[index];
 
-    if (questionData) {
-        document.getElementById('question').value = questionData.question;
-        document.getElementById('options').value = questionData.options.join('\n');
+  if (questionData) {
+    document.getElementById("question").value = questionData.question;
+    document.getElementById("options").value = questionData.options.join("\n");
 
-        const correctAnswerSelect = document.getElementById('correct-answer');
-        correctAnswerSelect.innerHTML = `<option value="">Select correct answer</option>`;
-        questionData.options.forEach((option, i) => {
-            const newOptionElem = document.createElement('option');
-            newOptionElem.value = i + 1;
-            newOptionElem.textContent = `${i + 1}): ${option}`; // Format: 1): Option text
-            correctAnswerSelect.appendChild(newOptionElem);
-        });
-
-        correctAnswerSelect.value = questionData.correctAnswerIndex + 1;
-    } else {
-        document.getElementById('question').value = '';
-        document.getElementById('options').value = '';
-        document.getElementById('correct-answer').innerHTML = `<option value="">Select correct answer</option>`;
-    }
-
-    updateCurrentQuestionNumber(); // Update the counter for current question
-}
-
-// Update the counter for the current question
-function updateCurrentQuestionNumber() {
-    document.getElementById('current-question-number').textContent = `Current Question: ${currentQuestionIndex + 1}`;
-}
-
-// Next Question button event
-document.getElementById('next-question').addEventListener('click', () => {
-    const questionText = document.getElementById('question').value;
-    const optionsText = document.getElementById('options').value;
-
-    const options = optionsText.split('\n').map(option => option.trim()).filter(option => option !== "");
-    const correctAnswerIndex = document.getElementById('correct-answer').value - 1;
-
-    if (questionText.trim() === '' || options.length === 0 || correctAnswerIndex < 0) {
-        alert('Please enter the question, options, and select the correct answer.');
-        return;
-    }
-
-    const questionData = { question: questionText, options, correctAnswerIndex };
-
-    if (quizData[currentQuestionIndex]) {
-        quizData[currentQuestionIndex] = questionData; // Update the existing question data
-    } else {
-        quizData.push(questionData); // Add new question
-    }
-
-    currentQuestionIndex += 1;
-    loadQuestion(currentQuestionIndex); // Load the next question
-    console.log("Current Quiz Data:", quizData);
-});
-
-// Previous Question button event
-document.getElementById('previous-question').addEventListener('click', () => {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex -= 1;
-        loadQuestion(currentQuestionIndex); // Load the previous question
-    }
-});
-
-// Listen to options textarea input to update correct answer dropdown
-document.getElementById('options').addEventListener('input', () => {
-    const optionsText = document.getElementById('options').value;
-    const options = optionsText.split('\n').map(option => option.trim()).filter(option => option !== "");
-
-    const correctAnswerSelect = document.getElementById('correct-answer');
+    const correctAnswerSelect = document.getElementById("correct-answer");
     correctAnswerSelect.innerHTML = `<option value="">Select correct answer</option>`;
-
-    options.forEach((option, i) => {
-        const newOptionElem = document.createElement('option');
-        newOptionElem.value = i + 1;
-        newOptionElem.textContent = `${i + 1}): ${option}`;  // Format: 1): Option text
-        correctAnswerSelect.appendChild(newOptionElem);
+    questionData.options.forEach((option, i) => {
+      const newOptionElem = document.createElement("option");
+      newOptionElem.value = i + 1;
+      newOptionElem.textContent = `${i + 1}): ${option}`;
+      correctAnswerSelect.appendChild(newOptionElem);
     });
-});
 
-// Generate PDF button event with confirmation
-document.getElementById('generate-pdf').addEventListener('click', () => {
-    // Before generating PDF, save the current question if not already saved
-    const questionText = document.getElementById('question').value;
-    const optionsText = document.getElementById('options').value;
+    correctAnswerSelect.value = questionData.correctAnswerIndex + 1;
+  } else {
+    document.getElementById("question").value = "";
+    document.getElementById("options").value = "";
+    document.getElementById(
+      "correct-answer"
+    ).innerHTML = `<option value="">Select correct answer</option>`;
+  }
 
-    const options = optionsText.split('\n').map(option => option.trim()).filter(option => option !== "");
-    const correctAnswerIndex = document.getElementById('correct-answer').value - 1;
-
-    if (questionText.trim() !== '' && options.length !== 0 && correctAnswerIndex >= 0) {
-        const questionData = { question: questionText, options, correctAnswerIndex };
-        if (!quizData[currentQuestionIndex]) {
-            quizData.push(questionData); // Save current question if not already saved
-        } else {
-            quizData[currentQuestionIndex] = questionData; // Update the existing question
-        }
-    }
-
-    // Prompt for the custom title
-    const customTitle = prompt("Enter the title for your quiz PDF:", "Solve Quiz's");
-
-    if (!customTitle) {
-        alert("Please enter a title to generate the PDF.");
-        return;
-    }
-
-    // Confirm dialog
-    const confirmAction = window.confirm(`You have ${quizData.length} questions. Are you sure you want to generate the PDF?`);
-
-    if (confirmAction) {
-        if (quizData.length === 0) {
-            alert('No questions to generate PDF. Please add more questions.');
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        let yOffset = 20;
-        doc.setFontSize(18);
-
-        // Set the custom title from user input
-        doc.text(customTitle, 10, yOffset);
-        doc.setFontSize(14);
-        yOffset += 10;
-
-        quizData.forEach((item, index) => {
-            // Handle question wrapping if too long
-            const question = item.question;
-            const questionLines = doc.splitTextToSize(question, 180); // 180 is the max width for text
-
-            // Print the first line with the question number
-            doc.setFont("Times New Roman", "bold");
-            doc.text(`Q${index + 1}: ${questionLines[0]}`, 10, yOffset);
-            yOffset += 8;
-
-            // Print the remaining lines of the question
-            for (let i = 1; i < questionLines.length; i++) {
-                doc.setFont("Times New Roman", "bold");
-                doc.text(questionLines[i], 10, yOffset);
-                yOffset += 8;
-            }
-
-            item.options.forEach((option, i) => {
-                const formattedOption = `${i + 1}): ${option}`;  // Format option as "1): Option text"
-                if (i === item.correctAnswerIndex) {
-                    doc.setTextColor(0, 128, 0);  // Green color for correct answer
-                    doc.setFont("Times New Roman", "bold");
-                    doc.text(`  ${formattedOption}`, 15, yOffset);
-                    doc.setFont("Times New Roman", "normal");
-                    doc.setTextColor(0, 0, 0);  // Reset color to black
-                } else {
-                    doc.text(`  ${formattedOption}`, 15, yOffset);
-                }
-                yOffset += 8;
-            });
-
-            yOffset += 10;
-
-            // Check if the current content fits before adding a new page
-            if (yOffset > doc.internal.pageSize.height - 20) {
-                doc.addPage();
-                yOffset = 20;
-            }
-        });
-
-        // Download PDF and show success message
-        doc.save('Quiz.pdf');
-        alert('Thank you for using the quiz PDF generator!');
-
-        clearQuizData(); // Clear quiz data after generating PDF
-        setTimeout(() => {
-            location.reload(); // Refresh the page after PDF is generated
-        }, 1000); // Wait for a second before refreshing the page
-    }
-});
-
-// Clear quiz data
-function clearQuizData() {
-    quizData = [];
-    currentQuestionIndex = 0;
-    loadQuestion(currentQuestionIndex);
-    updateCurrentQuestionNumber(); // Reset the counter when clearing data
+  updateCurrentQuestionNumber();
+  updatePreviewPane();
 }
 
-// Initialize the quiz with the first question if exists
+function updateCurrentQuestionNumber() {
+  document.getElementById(
+    "current-question-number"
+  ).textContent = `Current Question: ${currentQuestionIndex + 1}`;
+}
+
+function updatePreviewPane() {
+  const previewPane = document.getElementById("question-preview");
+  previewPane.innerHTML = "";
+
+  quizData.forEach((question, index) => {
+    const questionElement = document.createElement("li");
+    questionElement.classList.add("border-b", "pb-4", "mb-4");
+
+    const questionText = document.createElement("p");
+    questionText.classList.add("font-semibold", "text-lg");
+    questionText.textContent = `Q ${index + 1}: ${question.question}`;
+
+    const optionsList = document.createElement("ul");
+    optionsList.classList.add("ml-4", "space-y-2");
+
+    question.options.forEach((option, i) => {
+      const optionItem = document.createElement("li");
+      optionItem.textContent = `${i + 1}: ${option}`;
+      if (i === question.correctAnswerIndex) {
+        optionItem.classList.add("text-green-500");
+      }
+      optionsList.appendChild(optionItem);
+    });
+
+    const editDeleteBtns = document.createElement("div");
+    editDeleteBtns.classList.add("flex", "gap-2", "mt-2");
+
+    const editButton = document.createElement("button");
+    editButton.textContent = "Edit";
+    editButton.classList.add(
+      "bg-yellow-500",
+      "text-white",
+      "px-2",
+      "py-1",
+      "rounded",
+      "text-xs",
+      "cursor-pointer"
+    );
+    editButton.onclick = () => editQuestion(index);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.classList.add(
+      "bg-red-500",
+      "text-white",
+      "px-2",
+      "py-1",
+      "rounded",
+      "text-xs",
+      "cursor-pointer"
+    );
+    deleteButton.onclick = () => deleteQuestion(index);
+
+    editDeleteBtns.appendChild(editButton);
+    editDeleteBtns.appendChild(deleteButton);
+
+    questionElement.appendChild(questionText);
+    questionElement.appendChild(optionsList);
+    questionElement.appendChild(editDeleteBtns);
+
+    previewPane.appendChild(questionElement);
+  });
+}
+
+function editQuestion(index) {
+  currentQuestionIndex = index;
+  loadQuestion(index);
+}
+
+function deleteQuestion(index) {
+  quizData.splice(index, 1);
+  if (currentQuestionIndex > 0) currentQuestionIndex -= 1;
+  loadQuestion(currentQuestionIndex);
+  updatePreviewPane();
+}
+
+document.getElementById("next-question").addEventListener("click", () => {
+  const questionText = document.getElementById("question").value;
+  const optionsText = document.getElementById("options").value;
+
+  const options = optionsText
+    .split("\n")
+    .map((opt) => opt.trim())
+    .filter((opt) => opt !== "");
+  const correctAnswerIndex =
+    document.getElementById("correct-answer").value - 1;
+
+  if (!questionText.trim() || options.length === 0 || correctAnswerIndex < 0) {
+    alert("Please enter the question, options, and select the correct answer.");
+    return;
+  }
+
+  const questionData = { question: questionText, options, correctAnswerIndex };
+  if (quizData[currentQuestionIndex]) {
+    quizData[currentQuestionIndex] = questionData;
+  } else {
+    quizData.push(questionData);
+  }
+
+  currentQuestionIndex += 1;
+  loadQuestion(currentQuestionIndex);
+});
+
+document.getElementById("previous-question").addEventListener("click", () => {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex -= 1;
+    loadQuestion(currentQuestionIndex);
+  }
+});
+
+document.getElementById("options").addEventListener("input", () => {
+  const optionsText = document.getElementById("options").value;
+  const options = optionsText
+    .split("\n")
+    .map((opt) => opt.trim())
+    .filter((opt) => opt !== "");
+
+  const correctAnswerSelect = document.getElementById("correct-answer");
+  correctAnswerSelect.innerHTML = `<option value="">Select correct answer</option>`;
+  options.forEach((option, i) => {
+    const newOptionElem = document.createElement("option");
+    newOptionElem.value = i + 1;
+    newOptionElem.textContent = `${i + 1}): ${option}`;
+    correctAnswerSelect.appendChild(newOptionElem);
+  });
+});
+
+function drawWatermark(doc) {
+  doc.setTextColor(150); // Light grey
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+
+  // Set transparency using GState (opacity ~ 10%)
+  const gState = doc.context2d ? null : doc.internal.write("q 0.1 g"); // fallback if context2d not supported
+
+  // Center of page
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  doc.saveGraphicsState && doc.saveGraphicsState(); // modern browsers
+  doc.setTextColor(180); // light grey again just to ensure
+
+  doc.text("Daniyal Shahid - Quiz PDF Tool", pageWidth / 2, pageHeight / 2, {
+    align: "center",
+    angle: 45,
+  });
+
+  doc.restoreGraphicsState && doc.restoreGraphicsState();
+}
+
+// Generate PDF button event with watermark and dynamic content
+document.getElementById("generate-pdf").addEventListener("click", () => {
+  const questionText = document.getElementById("question").value;
+  const optionsText = document.getElementById("options").value;
+
+  const options = optionsText
+    .split("\n")
+    .map((option) => option.trim())
+    .filter((option) => option !== "");
+  const correctAnswerIndex =
+    document.getElementById("correct-answer").value - 1;
+
+  if (
+    questionText.trim() !== "" &&
+    options.length !== 0 &&
+    correctAnswerIndex >= 0
+  ) {
+    const questionData = {
+      question: questionText,
+      options,
+      correctAnswerIndex,
+    };
+    if (!quizData[currentQuestionIndex]) {
+      quizData.push(questionData);
+    } else {
+      quizData[currentQuestionIndex] = questionData;
+    }
+  }
+
+  const customTitle = prompt(
+    "Enter the title for your quiz PDF:",
+    "Solve Quiz's"
+  );
+  if (!customTitle) {
+    alert("Please enter a title to generate the PDF.");
+    return;
+  }
+
+  if (quizData.length === 0) {
+    alert("No questions to generate PDF. Please add more questions.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.height;
+
+  let yOffset = 35;
+
+  // Page Title Header
+  doc.setFillColor(33, 150, 243); // blue
+  doc.rect(0, 10, 210, 15, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(customTitle, 105, 20, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+
+  quizData.forEach((item, index) => {
+    const questionLines = doc.splitTextToSize(item.question, 180);
+    const estimatedHeight =
+      questionLines.length * 6 + item.options.length * 6 + 16;
+
+    // Page break if not enough space
+    if (yOffset + estimatedHeight > pageHeight - 20) {
+      doc.addPage();
+      yOffset = 35;
+
+      // Re-draw page title
+    //   doc.setFillColor(33, 150, 243);
+    //   doc.rect(0, 10, 210, 15, "F");
+    //   doc.setTextColor(255, 255, 255);
+    //   doc.setFontSize(16);
+    //   doc.setFont("helvetica", "bold");
+    //   doc.text(customTitle, 105, 20, { align: "center" });
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.text(`Q${index + 1}:`, 10, yOffset);
+    yOffset += 6;
+
+    questionLines.forEach((line) => {
+      doc.setFont("helvetica", "normal");
+      doc.text(line, 15, yOffset);
+      yOffset += 6;
+    });
+
+    yOffset += 2;
+
+    item.options.forEach((option, i) => {
+      if (i === item.correctAnswerIndex) {
+        doc.setTextColor(34, 139, 34); // green
+        doc.setFont("helvetica", "bold");
+      } else {
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+      }
+      doc.text(`${i + 1}) ${option}`, 20, yOffset);
+      yOffset += 6;
+    });
+
+    yOffset += 8;
+  });
+
+  // Watermark on each page
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+   doc.setTextColor(220, 220, 220); // lighter grey for less opacity
+    doc.setFontSize(30);
+    doc.setFont("helvetica", "bold");
+    doc.text("Daniyal Shahid - Quiz Tool", 105, 150, {
+      align: "center",
+      angle: 0,
+    });
+  }
+
+  doc.save(`${customTitle}.pdf`);
+  alert("PDF generated successfully!");
+
+  clearQuizData();
+  setTimeout(() => location.reload(), 1000);
+});
+
+function clearQuizData() {
+  quizData = [];
+  currentQuestionIndex = 0;
+  loadQuestion(currentQuestionIndex);
+  updateCurrentQuestionNumber();
+}
+
 loadQuestion(currentQuestionIndex);
 updateCurrentQuestionNumber();
