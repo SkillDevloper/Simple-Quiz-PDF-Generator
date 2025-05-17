@@ -1,7 +1,3 @@
-Here’s a **complete and clean README.md** draft you can use on your GitHub repo for your project.
-
----
-
 # 📄 Quiz PDF Generator (Objective & Subjective)
 
 A **modern, responsive** web-based tool to generate **PDFs from quiz questions** with support for both **Objective (MCQ)** and **Subjective** formats. This tool also includes a **preview panel**, **dark mode**, and a **professional PDF export** with watermark and layout preservation.
@@ -99,7 +95,3 @@ git clone https://github.com/SkillDevloper/Simple-Quiz-PDF-Generator.git
 **Daniyal Shahid**
 Developer | Designer | CEH13
 © 2025 All Rights Reserved
-
----
-
-Let me know if you'd like a `.zip` version, `favicon` addition, or GitHub deploy setup.
