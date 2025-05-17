@@ -60,9 +60,8 @@ git clone https://github.com/SkillDevloper/Simple-Quiz-PDF-Generator.git
 ```
 
 ### view Live:
-```bash
+
 https://skilldevloper.github.io/Simple-Quiz-PDF-Generator/
-```
 
 2. Open the `index.html` file in any modern browser.
 
