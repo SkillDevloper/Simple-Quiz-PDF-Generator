@@ -1,5 +1,6 @@
 let quizData = [];
 let currentQuestionIndex = 0;
+let quizMode = "objective";
 
 // Load the current question in the form
 function loadQuestion(index) {
@@ -49,17 +50,30 @@ function updatePreviewPane() {
     questionText.classList.add("font-semibold", "text-lg");
     questionText.textContent = `Q ${index + 1}: ${question.question}`;
 
-    const optionsList = document.createElement("ul");
-    optionsList.classList.add("ml-4", "space-y-2");
+    questionElement.appendChild(questionText);
 
-    question.options.forEach((option, i) => {
-      const optionItem = document.createElement("li");
-      optionItem.textContent = `${i + 1}: ${option}`;
-      if (i === question.correctAnswerIndex) {
-        optionItem.classList.add("text-green-500");
-      }
-      optionsList.appendChild(optionItem);
-    });
+    if (question.type === "subjective") {
+      const answerEl = document.createElement("p");
+      answerEl.classList.add("italic", "text-sm", "mt-2");
+      answerEl.innerHTML = `Expected Answer: ${(
+        question.answer || "N/A"
+      ).replace(/\n/g, "<br>")}`;
+      // answerEl.textContent = `Expected Answer: ${question.answer || "N/A"}`;
+      questionElement.appendChild(answerEl);
+    } else if (question.type === "objective") {
+      const optionsList = document.createElement("ul");
+      optionsList.classList.add("ml-4", "space-y-2");
+
+      question.options.forEach((option, i) => {
+        const optionItem = document.createElement("li");
+        optionItem.textContent = `${i + 1}: ${option}`;
+        if (i === question.correctAnswerIndex) {
+          optionItem.classList.add("text-green-500");
+        }
+        optionsList.appendChild(optionItem);
+      });
+      questionElement.appendChild(optionsList);
+    }
 
     const editDeleteBtns = document.createElement("div");
     editDeleteBtns.classList.add("flex", "gap-2", "mt-2");
@@ -93,12 +107,19 @@ function updatePreviewPane() {
     editDeleteBtns.appendChild(editButton);
     editDeleteBtns.appendChild(deleteButton);
 
-    questionElement.appendChild(questionText);
-    questionElement.appendChild(optionsList);
     questionElement.appendChild(editDeleteBtns);
 
     previewPane.appendChild(questionElement);
   });
+}
+
+function deleteQuestion(index) {
+  if (confirm("Are you shure you want to delete?")) {
+    quizData.splice(index, 1);
+    if (currentQuestionIndex > 0) currentQuestionIndex -= 1;
+    loadQuestion(currentQuestionIndex);
+    updatePreviewPane();
+  }
 }
 
 function editQuestion(index) {
@@ -106,36 +127,46 @@ function editQuestion(index) {
   loadQuestion(index);
 }
 
-function deleteQuestion(index) {
-  quizData.splice(index, 1);
-  if (currentQuestionIndex > 0) currentQuestionIndex -= 1;
-  loadQuestion(currentQuestionIndex);
-  updatePreviewPane();
-}
-
 document.getElementById("next-question").addEventListener("click", () => {
   const questionText = document.getElementById("question").value;
-  const optionsText = document.getElementById("options").value;
 
-  const options = optionsText
-    .split("\n")
-    .map((opt) => opt.trim())
-    .filter((opt) => opt !== "");
-  const correctAnswerIndex =
-    document.getElementById("correct-answer").value - 1;
-
-  if (!questionText.trim() || options.length === 0 || correctAnswerIndex < 0) {
-    alert("Please enter the question, options, and select the correct answer.");
+  if (!questionText.trim()) {
+    alert("Please enter the question.");
     return;
   }
 
-  const questionData = { question: questionText, options, correctAnswerIndex };
-  if (quizData[currentQuestionIndex]) {
-    quizData[currentQuestionIndex] = questionData;
+  let questionData;
+
+  if (quizMode === "objective") {
+    const optionsText = document.getElementById("options").value;
+    const options = optionsText
+      .split("\n")
+      .map((opt) => opt.trim())
+      .filter((opt) => opt !== "");
+    const correctAnswerIndex =
+      document.getElementById("correct-answer").value - 1;
+
+    if (options.length === 0 || correctAnswerIndex < 0) {
+      alert("Please enter options and select correct answer.");
+      return;
+    }
+
+    questionData = {
+      question: questionText,
+      options,
+      correctAnswerIndex,
+      type: "objective",
+    };
   } else {
-    quizData.push(questionData);
+    const subjectiveAnswer = document.getElementById("subjective-answer").value;
+    questionData = {
+      question: questionText,
+      answer: subjectiveAnswer,
+      type: "subjective",
+    };
   }
 
+  quizData[currentQuestionIndex] = questionData;
   currentQuestionIndex += 1;
   loadQuestion(currentQuestionIndex);
 });
@@ -164,6 +195,23 @@ document.getElementById("options").addEventListener("input", () => {
   });
 });
 
+function switchMode(mode) {
+  quizMode = mode;
+
+  const objectiveFields = document.getElementById("objective-fields");
+  const subjectiveFields = document.getElementById("subjective-fields");
+
+  if (mode === "objective") {
+    objectiveFields.classList.remove("hidden");
+    subjectiveFields.classList.add("hidden");
+  } else {
+    objectiveFields.classList.add("hidden");
+    subjectiveFields.classList.remove("hidden");
+  }
+
+  loadQuestion(currentQuestionIndex);
+}
+
 function drawWatermark(doc) {
   doc.setTextColor(150); // Light grey
   doc.setFontSize(20);
@@ -189,33 +237,6 @@ function drawWatermark(doc) {
 
 // Generate PDF button event with watermark and dynamic content
 document.getElementById("generate-pdf").addEventListener("click", () => {
-  const questionText = document.getElementById("question").value;
-  const optionsText = document.getElementById("options").value;
-
-  const options = optionsText
-    .split("\n")
-    .map((option) => option.trim())
-    .filter((option) => option !== "");
-  const correctAnswerIndex =
-    document.getElementById("correct-answer").value - 1;
-
-  if (
-    questionText.trim() !== "" &&
-    options.length !== 0 &&
-    correctAnswerIndex >= 0
-  ) {
-    const questionData = {
-      question: questionText,
-      options,
-      correctAnswerIndex,
-    };
-    if (!quizData[currentQuestionIndex]) {
-      quizData.push(questionData);
-    } else {
-      quizData[currentQuestionIndex] = questionData;
-    }
-  }
-
   const customTitle = prompt(
     "Enter the title for your quiz PDF:",
     "Solve Quiz's"
@@ -224,7 +245,6 @@ document.getElementById("generate-pdf").addEventListener("click", () => {
     alert("Please enter a title to generate the PDF.");
     return;
   }
-
   if (quizData.length === 0) {
     alert("No questions to generate PDF. Please add more questions.");
     return;
@@ -233,11 +253,10 @@ document.getElementById("generate-pdf").addEventListener("click", () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.height;
-
   let yOffset = 35;
 
   // Page Title Header
-  doc.setFillColor(33, 150, 243); // blue
+  doc.setFillColor(33, 150, 243);
   doc.rect(0, 10, 210, 15, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
@@ -248,66 +267,94 @@ document.getElementById("generate-pdf").addEventListener("click", () => {
   doc.setTextColor(0, 0, 0);
 
   quizData.forEach((item, index) => {
-    const questionLines = doc.splitTextToSize(item.question, 180);
-    const estimatedHeight =
-      questionLines.length * 6 + item.options.length * 6 + 16;
+    // calculate estimatedHeight initially
+    let estimatedHeight = 0;
 
-    // Page break if not enough space
+    const questionLines = doc.splitTextToSize(
+      `Q${index + 1}: ${item.question}`,
+      170
+    );
+    estimatedHeight += questionLines.length * 6 + 6;
+
+    if (item.type === "objective") {
+      estimatedHeight += item.options.length * 6;
+    } else if (item.type === "subjective") {
+      const answerLines = doc.splitTextToSize(
+        `Answer: ${item.answer || ""}`,
+        170
+      );
+      estimatedHeight += answerLines.length * 6 + 6;
+    }
+
     if (yOffset + estimatedHeight > pageHeight - 20) {
       doc.addPage();
       yOffset = 35;
-
-      // Re-draw page title
-    //   doc.setFillColor(33, 150, 243);
-    //   doc.rect(0, 10, 210, 15, "F");
-    //   doc.setTextColor(255, 255, 255);
-    //   doc.setFontSize(16);
-    //   doc.setFont("helvetica", "bold");
-    //   doc.text(customTitle, 105, 20, { align: "center" });
-
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
     }
 
+    // Draw question
     doc.setFont("helvetica", "bold");
-    doc.text(`Q${index + 1}:`, 10, yOffset);
-    yOffset += 6;
-
+    doc.setTextColor(0, 0, 0);
     questionLines.forEach((line) => {
-      doc.setFont("helvetica", "normal");
       doc.text(line, 15, yOffset);
       yOffset += 6;
     });
 
-    yOffset += 2;
+    yOffset += 4;
 
-    item.options.forEach((option, i) => {
-      if (i === item.correctAnswerIndex) {
-        doc.setTextColor(34, 139, 34); // green
-        doc.setFont("helvetica", "bold");
-      } else {
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "normal");
-      }
-      doc.text(`${i + 1}) ${option}`, 20, yOffset);
-      yOffset += 6;
-    });
+    if (item.type === "objective") {
+      item.options.forEach((option, i) => {
+        const optionLines = doc.splitTextToSize(`${i + 1}) ${option}`, 170);
+        if (i === item.correctAnswerIndex) {
+          doc.setTextColor(34, 139, 34); // green
+          doc.setFont("helvetica", "bold");
+        } else {
+          doc.setTextColor(0, 0, 0);
+          doc.setFont("helvetica", "normal");
+        }
+        optionLines.forEach((line) => {
+          doc.text(line, 20, yOffset);
+          yOffset += 6;
+        });
+        yOffset += 2;
+      });
+    } else if (item.type === "subjective") {
+      const answerLines = doc.splitTextToSize(
+        `Answer: ${item.answer || "N/A"}`,
+        170
+      );
+      doc.setTextColor(34, 139, 34); // green
+      doc.setFont("helvetica", "bold");
+      answerLines.forEach((line) => {
+        doc.text(line, 20, yOffset);
+        yOffset += 6;
+      });
+      yOffset += 8;
+    }
 
-    yOffset += 8;
+    yOffset += 8; // extra space after each question
   });
 
   // Watermark on each page
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-   doc.setTextColor(220, 220, 220); // lighter grey for less opacity
+    doc.setTextColor(220, 220, 220);
     doc.setFontSize(30);
     doc.setFont("helvetica", "bold");
-    doc.text("Daniyal Shahid - Quiz Tool", 105, 150, {
+    doc.text("Daniyal Shahid - PDF Tool", 105, 150, {
       align: "center",
-      angle: 0,
+      angle: 45,
     });
   }
+
+  // Footer with developer name
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text("Generated by Daniyal Shahid - quiz PDF tool", 105, 285, {
+    align: "center",
+  });
 
   doc.save(`${customTitle}.pdf`);
   alert("PDF generated successfully!");
