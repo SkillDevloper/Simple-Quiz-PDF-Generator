@@ -59,6 +59,11 @@ A **modern, responsive** web-based tool to generate **PDFs from quiz questions**
 git clone https://github.com/SkillDevloper/Simple-Quiz-PDF-Generator.git
 ```
 
+### view Live:
+```bash
+https://skilldevloper.github.io/Simple-Quiz-PDF-Generator/
+```
+
 2. Open the `index.html` file in any modern browser.
 
 3. Start creating your quiz!
