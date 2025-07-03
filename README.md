@@ -24,8 +24,7 @@ A **modern, responsive** web-based tool to generate **PDFs from quiz questions**
 | **HTML**         | Markup for layout                            |
 | **Tailwind CSS** | Styling & theming                            |
 | **JavaScript**   | Core logic (quiz management, PDF generation) |
-| **jsPDF**        | PDF creation and styling                     |
-| **Font Awesome** | Icons                                        |
+| **jsPDF**        | PDF creation and styling                     |                               |
 | **LocalStorage** | Theme (dark/light) state persistence         |
 
 ---
